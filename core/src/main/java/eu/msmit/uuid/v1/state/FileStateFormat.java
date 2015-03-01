@@ -21,14 +21,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.TimeZone;
 
 import eu.msmit.uuid.v1.UUIDv1;
@@ -37,20 +34,41 @@ import eu.msmit.uuid.v1.UUIDv1;
  * @author Marijn Smit (info@msmit.eu)
  * @since Feb 25, 2015
  */
-public class TextUuidState {
+public class FileStateFormat {
 
 	public static final String STATE_HEADER = "UUID State v1.0";
-
 	public static final String STATE_PROPERTY_TS = "Generated: ";
 	public static final String STATE_PROPERTY_HASH = "Hash: ";
 	public static final String STATE_PROPERTY_UUID = "UUID: ";
 
+	private static String hex(byte[] digest) {
+		if (digest == null) {
+			return null;
+		}
+		StringBuilder result = new StringBuilder(digest.length * 2);
+		for (byte b : digest) {
+			String hex = Integer.toString(b & 0xFF, 16);
+			if (hex.length() == 1) {
+				result.append('0');
+			}
+			result.append(hex);
+		}
+		return result.toString();
+	}
+
+	private static final DateFormat DATEFORMAT = SimpleDateFormat
+			.getDateTimeInstance();
+	private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+
 	/**
+	 * Read a state from the given input stream
+	 * 
 	 * @param in
-	 * @return
+	 *            the {@link InputStream}
 	 * @throws IOException
+	 *             if some kind of read error occurs
 	 */
-	public static TextUuidState read(InputStream in) throws IOException {
+	public UUIDv1 read(InputStream in) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 		if (!STATE_HEADER.equals(reader.readLine())) {
@@ -60,7 +78,7 @@ public class TextUuidState {
 		String generatedLine = reader.readLine();
 
 		if (generatedLine == null
-				|| generatedLine.startsWith(STATE_PROPERTY_TS)) {
+				|| !generatedLine.startsWith(STATE_PROPERTY_TS)) {
 			throw new IOException();
 		}
 
@@ -75,114 +93,39 @@ public class TextUuidState {
 		String validateHash = hashLine.substring(hashOffset);
 		MessageDigest digest = createDigest();
 
-		List<UUIDv1> uuids = new ArrayList<>();
-		String uuidLine = null;
-		int uuidOffset = STATE_PROPERTY_UUID.length();
-		while ((uuidLine = reader.readLine()) != null) {
-			if (uuidLine.startsWith(STATE_PROPERTY_UUID)) {
-				uuids.add(new UUIDv1(uuidLine.substring(uuidOffset)));
-			}
-
-			digest.update(uuidLine.getBytes());
+		String uuidLine = reader.readLine();
+		if (!uuidLine.startsWith(STATE_PROPERTY_UUID)) {
+			throw new IOException();
 		}
 
+		digest.update(uuidLine.getBytes());
 		String hash = hex(digest.digest());
 
 		if (!hash.equals(validateHash)) {
 			throw new IOException("Hash values did not match");
 		}
 
-		return new TextUuidState(uuids);
-	}
-
-	/**
-	 * @param nodes
-	 * @return
-	 */
-	public static TextUuidState initialize(List<UUIDv1> uuids) {
-		return new TextUuidState(uuids);
-	}
-
-	private static MessageDigest createDigest() throws IOException {
-		MessageDigest digest = null;
-
 		try {
-			digest = MessageDigest.getInstance("sha1");
-		} catch (NoSuchAlgorithmException e) {
-			throw new IOException(e);
+			return new UUIDv1(uuidLine.substring(STATE_PROPERTY_UUID.length()));
+		} catch (IllegalArgumentException e) {
+			throw new IOException("Illegal UUID format", e);
 		}
-		return digest;
-	}
-
-	private static String hex(byte[] digest) {
-		if (digest == null) {
-			return null;
-		}
-		StringBuilder result = new StringBuilder(digest.length * 2);
-		for (byte b : digest) {
-			String hex = Integer.toString(b, 16);
-			if (hex.length() == 1) {
-				result.append('0');
-			}
-			result.append(hex);
-		}
-		return result.toString();
-	}
-
-	private static final DateFormat DATEFORMAT = SimpleDateFormat
-			.getDateTimeInstance();
-	private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-
-	private final List<UUIDv1> state_;
-
-	/**
-	 * @param state
-	 */
-	private TextUuidState(List<UUIDv1> state) {
-		if (state == null) {
-			throw new IllegalArgumentException();
-		}
-
-		state_ = state;
 	}
 
 	/**
-	 * @param index
-	 * @param state
-	 */
-	public void set(int index, UUIDv1 state) {
-		state_.set(index, state);
-	}
-
-	/**
-	 * @param index
-	 * @return
-	 */
-	public UUIDv1 get(int index) {
-		return state_.get(index);
-	}
-
-	/**
-	 * @return
-	 */
-	public int size() {
-		return state_.size();
-	}
-
-	/**
+	 * @param writeThis
+	 *            {@link UUIDv1} to write
 	 * @param out
+	 *            the {@link OutputStream} to write to
 	 * @throws IOException
+	 *             if some kind of write error occurs
 	 */
-	public void write(OutputStream out) throws IOException {
-		StringWriter uuidBuf = new StringWriter();
-		PrintWriter uuidWriter = new PrintWriter(uuidBuf);
-		MessageDigest digest = createDigest();
+	public void write(UUIDv1 writeThis, OutputStream out) throws IOException {
+		String uuidLine = STATE_PROPERTY_UUID
+				+ (writeThis == null ? "null" : writeThis.toString());
 
-		for (UUIDv1 uuid : state_) {
-			String line = STATE_PROPERTY_UUID + uuid.toString();
-			digest.update(line.getBytes());
-			uuidWriter.println(line);
-		}
+		MessageDigest digest = createDigest();
+		digest.update(uuidLine.getBytes());
 
 		PrintWriter writer = new PrintWriter(out);
 		writer.println(STATE_HEADER);
@@ -193,6 +136,18 @@ public class TextUuidState {
 		writer.print(STATE_PROPERTY_HASH);
 		writer.println(hex(digest.digest()));
 
-		writer.write(uuidBuf.toString());
+		writer.println(uuidLine);
+		writer.flush();
+	}
+
+	protected MessageDigest createDigest() throws IOException {
+		MessageDigest digest = null;
+
+		try {
+			digest = MessageDigest.getInstance("sha1");
+		} catch (NoSuchAlgorithmException e) {
+			throw new IOException(e);
+		}
+		return digest;
 	}
 }

@@ -17,6 +17,8 @@ package eu.msmit.uuid.v1.state;
 
 import java.util.concurrent.TimeUnit;
 
+import eu.msmit.uuid.v1.UUIDv1;
+
 /**
  * @author Marijn Smit (info@msmit.eu)
  * @since Feb 25, 2015
@@ -30,7 +32,7 @@ public class ProcessState implements SharedState {
 	}
 
 	@Override
-	public boolean release(SharedLock lock) {
+	public boolean release(SharedLock lock, UUIDv1 uuid) {
 		return false;
 	}
 }

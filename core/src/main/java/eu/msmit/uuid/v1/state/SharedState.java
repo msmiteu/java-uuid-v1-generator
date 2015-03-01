@@ -17,6 +17,8 @@ package eu.msmit.uuid.v1.state;
 
 import java.util.concurrent.TimeUnit;
 
+import eu.msmit.uuid.v1.UUIDv1;
+
 /**
  * @author Marijn Smit (info@msmit.eu)
  * @since Feb 25, 2015
@@ -36,8 +38,10 @@ public interface SharedState {
 	 * @param lock
 	 *            the lock to release, it must be the same instance that was
 	 *            returned from {@link #hold(long, TimeUnit)}
+	 * @param uuid
+	 *            {@link UUIDv1} the last generated UUID
 	 * @return false if the release was not successful, the result of the
 	 *         calling function should then be considered unsuccessful
 	 */
-	boolean release(SharedLock lock);
+	boolean release(SharedLock lock, UUIDv1 uuid);
 }

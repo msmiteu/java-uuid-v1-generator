@@ -86,13 +86,14 @@ public class DefaultGenerator implements VersionOneGenerator {
 
 		List<UUID> result = new ArrayList<>(batch.getAmount());
 		SharedLock lock = state_.hold(time, timeUnit);
+		UUIDv1 current = null;
 
 		if (lock == null) {
 			return Collections.emptyList();
 		}
 
 		try {
-			UUIDv1 current = lock.get();
+			current = lock.get();
 
 			// For batch time distribution, create custom clock
 
@@ -116,11 +117,8 @@ public class DefaultGenerator implements VersionOneGenerator {
 
 				result.add(current.toUUID());
 			}
-
-			lock.change(current);
-
 		} finally {
-			state_.release(lock);
+			state_.release(lock, current);
 		}
 
 		return result;

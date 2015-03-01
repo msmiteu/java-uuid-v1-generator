@@ -39,6 +39,6 @@ public class TestSharedFileState extends TestCase {
 		FileState file = new FileState("UUID");
 		SharedLock state = file.hold(30, TimeUnit.SECONDS);
 		assertNotNull(state);
-		file.release(state);
+		file.release(state, state.get());
 	}
 }

@@ -32,12 +32,4 @@ public interface SharedLock {
 	 * @return the current {@link UUIDv1} in the lock
 	 */
 	UUIDv1 get();
-
-	/**
-	 * Change the UUID in the state
-	 * 
-	 * @param uuid
-	 *            the {@link UUIDv1}
-	 */
-	void change(UUIDv1 uuid);
 }

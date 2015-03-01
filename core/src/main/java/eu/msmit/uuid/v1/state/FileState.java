@@ -23,7 +23,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,7 +35,7 @@ import eu.msmit.uuid.v1.UUIDv1;
  */
 public class FileState implements SharedState {
 
-	private static final String DEFAULT_FILE_NAME = "uuid.state";
+	public static final String DEFAULT_FILE_NAME = "uuid.state";
 
 	private static File createTmp(String name) {
 		if (name == null || name.length() < 4) {
@@ -52,7 +51,7 @@ public class FileState implements SharedState {
 	private class Lock implements SharedLock {
 		RandomAccessFile raf;
 		FileChannel channel;
-		TextUuidState state;
+		UUIDv1 state;
 		FileLock flock;
 		boolean dirty;
 
@@ -61,21 +60,12 @@ public class FileState implements SharedState {
 		}
 
 		public UUIDv1 get() {
-			if (state == null) {
-				return null;
-			}
-			return state.get(0);
-		}
-
-		public void change(UUIDv1 uuid) {
-			if (state == null) {
-				state = TextUuidState.initialize(Arrays.asList(uuid));
-			}
-			state.set(0, uuid);
+			return state;
 		}
 	}
 
 	private final File file_;
+	private final FileStateFormat format_;
 
 	public FileState() {
 		this(DEFAULT_FILE_NAME);
@@ -87,6 +77,7 @@ public class FileState implements SharedState {
 
 	public FileState(File file) {
 		file_ = file;
+		format_ = new FileStateFormat();
 	}
 
 	/*
@@ -155,8 +146,7 @@ public class FileState implements SharedState {
 		Lock lock = found.get();
 
 		try {
-			lock.state = TextUuidState.read(Channels
-					.newInputStream(lock.channel));
+			lock.state = format_.read(Channels.newInputStream(lock.channel));
 		} catch (IOException e) {
 			lock.dirty = true;
 		}
@@ -169,9 +159,9 @@ public class FileState implements SharedState {
 	 * 
 	 * @see
 	 * eu.msmit.uuid.v1.state.SharedState#release(eu.msmit.uuid.v1.state.SharedLock
-	 * )
+	 * , eu.msmit.uuid.v1.UUIDv1)
 	 */
-	public boolean release(SharedLock state) {
+	public boolean release(SharedLock state, UUIDv1 uuid) {
 		if (!(state instanceof Lock)) {
 			throw new IllegalArgumentException();
 		}
@@ -182,8 +172,8 @@ public class FileState implements SharedState {
 		try {
 			lock.channel.position(0);
 			lock.channel.truncate(0);
-			if (lock.state != null) {
-				lock.state.write(Channels.newOutputStream(lock.channel));
+			if (uuid != null) {
+				format_.write(uuid, Channels.newOutputStream(lock.channel));
 			}
 		} catch (IOException e) {
 			success = false;
