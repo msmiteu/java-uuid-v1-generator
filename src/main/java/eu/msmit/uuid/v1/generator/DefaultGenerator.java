@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.msmit.uuid.v1;
+package eu.msmit.uuid.v1.generator;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -23,6 +23,9 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import eu.msmit.uuid.v1.UUIDv1;
+import eu.msmit.uuid.v1.UuidBatch;
+import eu.msmit.uuid.v1.VersionOneGenerator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.clock.SystemClock;
 import eu.msmit.uuid.v1.node.SystemNode;

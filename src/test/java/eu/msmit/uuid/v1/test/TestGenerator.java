@@ -24,10 +24,11 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import junit.framework.TestCase;
-import eu.msmit.uuid.v1.DefaultGenerator;
 import eu.msmit.uuid.v1.UuidBatch;
 import eu.msmit.uuid.v1.VersionOneGenerator;
 import eu.msmit.uuid.v1.clock.Clock;
+import eu.msmit.uuid.v1.generator.BufferedGenerator;
+import eu.msmit.uuid.v1.generator.DefaultGenerator;
 
 /**
  * @author Marijn Smit (info@msmit.eu)
@@ -46,6 +47,19 @@ public class TestGenerator extends TestCase {
 	@Test
 	public void testGenerateBatch() throws Exception {
 		VersionOneGenerator gen = new DefaultGenerator();
+		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
+
+		List<UUID> next = gen.next(new UuidBatch(testAmount), 1, TimeUnit.DAYS);
+		assertEquals(testAmount, next.size());
+
+		Set<UUID> uniqCheck = new HashSet<>();
+		uniqCheck.addAll(next);
+		assertEquals(testAmount, uniqCheck.size());
+	}
+
+	@Test
+	public void testGenerateBufferBatch() throws Exception {
+		VersionOneGenerator gen = new BufferedGenerator(new DefaultGenerator());
 		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
 
 		List<UUID> next = gen.next(new UuidBatch(testAmount), 1, TimeUnit.DAYS);

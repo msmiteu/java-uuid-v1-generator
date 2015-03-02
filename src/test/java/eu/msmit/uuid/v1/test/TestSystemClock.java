@@ -35,7 +35,7 @@ public class TestSystemClock extends TestCase {
 		SystemClock clock = new SystemClock();
 		long prev = 0;
 
-		for (int i = 0; i < Clock.INTERVALS_PER_MS * 10; i++) {
+		for (int i = 0; i < Clock.INTERVALS_PER_MS * 100; i++) {
 			long ts = clock.getTimestamp(1, TimeUnit.MINUTES);
 
 			if (ts <= prev) {

@@ -20,6 +20,9 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 
 /**
+ * The use of this class is discouraged, but is kept for implementation
+ * correctness.
+ * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Feb 25, 2015
  */

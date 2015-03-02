@@ -22,6 +22,7 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
+import eu.msmit.uuid.v1.UUIDv1;
 import eu.msmit.uuid.v1.state.FileState;
 import eu.msmit.uuid.v1.state.SharedLock;
 
@@ -36,9 +37,27 @@ public class TestSharedFileState extends TestCase {
 		File tmpFile = File.createTempFile("uuid.", ".test");
 		tmpFile.deleteOnExit();
 
-		FileState file = new FileState("UUID");
+		FileState file = new FileState(tmpFile);
 		SharedLock state = file.hold(30, TimeUnit.SECONDS);
 		assertNotNull(state);
 		file.release(state, state.get());
+	}
+
+	@Test
+	public void testStateRecover() throws Exception {
+		UUIDv1 uuid = new UUIDv1("9af46100-c10d-11e4-9c16-255acb2167b8");
+		
+		File tmpFile = File.createTempFile("uuid.", ".test");
+		tmpFile.deleteOnExit();
+
+		FileState file = new FileState(tmpFile);
+		SharedLock state = file.hold(30, TimeUnit.SECONDS);
+		assertNotNull(state);
+		file.release(state, uuid);
+		
+		state = file.hold(30, TimeUnit.SECONDS);
+		assertNotNull(state);
+		assertEquals(uuid, state.get());
+		file.release(state, null);
 	}
 }
