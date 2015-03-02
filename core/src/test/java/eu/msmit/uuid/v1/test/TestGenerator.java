@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Test;
+
 import junit.framework.TestCase;
 import eu.msmit.uuid.v1.DefaultGenerator;
 import eu.msmit.uuid.v1.UuidBatch;
@@ -32,6 +34,8 @@ import eu.msmit.uuid.v1.clock.Clock;
  * @since Mar 1, 2015
  */
 public class TestGenerator extends TestCase {
+
+	@Test
 	public void testGenerateNext() throws Exception {
 		VersionOneGenerator gen = new DefaultGenerator();
 		UUID next = gen.next();
@@ -39,6 +43,7 @@ public class TestGenerator extends TestCase {
 		System.out.println(next);
 	}
 
+	@Test
 	public void testGenerateBatch() throws Exception {
 		VersionOneGenerator gen = new DefaultGenerator();
 		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);

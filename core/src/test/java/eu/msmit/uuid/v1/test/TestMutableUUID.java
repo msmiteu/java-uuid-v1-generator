@@ -17,6 +17,8 @@ package eu.msmit.uuid.v1.test;
 
 import java.util.UUID;
 
+import org.junit.Test;
+
 import junit.framework.TestCase;
 import eu.msmit.uuid.v1.UUIDv1;
 
@@ -25,6 +27,8 @@ import eu.msmit.uuid.v1.UUIDv1;
  * @since Mar 1, 2015
  */
 public class TestMutableUUID extends TestCase {
+
+	@Test
 	public void testTimestamp() throws Exception {
 		UUID original = UUID.fromString("f81d4fae-7dec-11d0-a765-00a0c91e6bf6");
 
