@@ -62,6 +62,11 @@ public class ProcessNode implements Node {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see eu.msmit.uuid.v1.node.Node#bytes()
+	 */
 	@Override
 	public byte[] bytes() {
 		return bytes_;

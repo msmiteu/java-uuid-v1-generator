@@ -26,26 +26,40 @@ import java.util.concurrent.TimeUnit;
 public interface VersionOneGenerator {
 
 	/**
-	 * @return
+	 * @return the next UUID waiting forever for it to come available
 	 * @throws InterruptedException
+	 *             when the executing thread is interrupted
 	 */
 	UUID next() throws InterruptedException;
 
 	/**
+	 * Behaves exactly like calling VersionOneGenerator.next(1, long, TimeUnit)
+	 * 
 	 * @param timeout
+	 *            the maximum time to wait for the batch
 	 * @param timeUnit
-	 * @return
+	 *            the unit of time
+	 * @return the next UUID within the given time or null when the wait expires
+	 *         or something else went wrong
 	 * @throws InterruptedException
+	 *             when the executing thread is interrupted
 	 */
 	UUID next(long timeout, TimeUnit timeUnit) throws InterruptedException;
 
 	/**
+	 * Generate a batch of UUID's.
+	 * 
 	 * @param batch
+	 *            the amount of UUID's to generate
 	 * @param timeout
+	 *            the maximum time to wait for the batch
 	 * @param timeUnit
-	 * @return
+	 *            the unit of time
+	 * @return a batch of the given size within the give timeout or an empty
+	 *         list when the wait expires or something else went wrong
 	 * @throws InterruptedException
+	 *             when the executing thread is interrupted
 	 */
-	List<UUID> next(UuidBatch batch, long timeout, TimeUnit timeUnit)
+	List<UUID> next(int batch, long timeout, TimeUnit timeUnit)
 			throws InterruptedException;
 }

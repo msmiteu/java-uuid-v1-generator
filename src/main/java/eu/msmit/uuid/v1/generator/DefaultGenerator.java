@@ -24,7 +24,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import eu.msmit.uuid.v1.UUIDv1;
-import eu.msmit.uuid.v1.UuidBatch;
 import eu.msmit.uuid.v1.VersionOneGenerator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.clock.SystemClock;
@@ -67,7 +66,7 @@ public class DefaultGenerator implements VersionOneGenerator {
 	 * @see eu.msmit.uuid.v1.Processor#next(eu.msmit.uuid.v1.UuidBatch)
 	 */
 	public UUID next(long time, TimeUnit timeUnit) throws InterruptedException {
-		List<UUID> result = next(UuidBatch.ONE, time, timeUnit);
+		List<UUID> result = next(1, time, timeUnit);
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -78,16 +77,16 @@ public class DefaultGenerator implements VersionOneGenerator {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see eu.msmit.uuid.v1.Processor#next(eu.msmit.uuid.v1.UuidBatch, long,
+	 * @see eu.msmit.uuid.v1.VersionOneGenerator#next(int, long,
 	 * java.util.concurrent.TimeUnit)
 	 */
-	public List<UUID> next(UuidBatch batch, long time, TimeUnit timeUnit)
+	public List<UUID> next(int batch, long time, TimeUnit timeUnit)
 			throws InterruptedException {
-		if (batch.getAmount() <= 0) {
+		if (batch <= 0) {
 			return Collections.emptyList();
 		}
 
-		List<UUID> result = new ArrayList<>(batch.getAmount());
+		List<UUID> result = new ArrayList<>(batch);
 		SharedLock lock = state_.hold(time, timeUnit);
 		UUIDv1 current = null;
 
@@ -100,7 +99,7 @@ public class DefaultGenerator implements VersionOneGenerator {
 
 			// For batch time distribution, create custom clock
 
-			for (int b = 0; b < batch.getAmount(); b++) {
+			for (int b = 0; b < batch; b++) {
 				long timestamp = clock_.getTimestamp(time, timeUnit);
 
 				if (timestamp == 0) {
@@ -121,15 +120,20 @@ public class DefaultGenerator implements VersionOneGenerator {
 				result.add(current.toUUID());
 			}
 		} finally {
-			state_.release(lock, current);
+			if (!state_.release(lock, current)) {
+				return Collections.emptyList();
+			}
 		}
 
 		return result;
 	}
 
 	/**
+	 * Create a new UUID with the given timestamp
+	 * 
 	 * @param timestamp
-	 * @return
+	 *            the timestamp
+	 * @return a {@link UUIDv1}
 	 */
 	private UUIDv1 newUUID(long timestamp) {
 		UUIDv1 uuid = new UUIDv1();

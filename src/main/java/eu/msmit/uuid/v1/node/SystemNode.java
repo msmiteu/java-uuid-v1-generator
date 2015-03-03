@@ -32,13 +32,13 @@ public class SystemNode implements Node {
 
 	public SystemNode() {
 		MessageDigest digest = NodeUtil.createDigest();
-		gatherOsName(digest);
+		gatherOsData(digest);
 		gatherInterfaces(digest);
 		gatherHostname(digest);
 		bytes_ = NodeUtil.makeFinal(digest);
 	}
 
-	private void gatherOsName(MessageDigest digest) {
+	private void gatherOsData(MessageDigest digest) {
 		String[] properties = new String[] { "os.name", "os.arch", "os.version" };
 		NodeUtil.digestProperties(digest, properties);
 	}
@@ -68,6 +68,11 @@ public class SystemNode implements Node {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see eu.msmit.uuid.v1.node.Node#bytes()
+	 */
 	@Override
 	public byte[] bytes() {
 		return bytes_;

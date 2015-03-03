@@ -22,10 +22,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
-import eu.msmit.uuid.v1.UuidBatch;
 import eu.msmit.uuid.v1.VersionOneGenerator;
 
 /**
+ * Buffers UUID's in a queue so burst generation can be done more efficiently.
+ * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 2, 2015
  */
@@ -42,8 +43,8 @@ public class BufferedGenerator implements VersionOneGenerator {
 		public void run() {
 			while (!Thread.interrupted()) {
 				try {
-					List<UUID> batch = generator_.next(new UuidBatch(buffer_),
-							1, TimeUnit.MINUTES);
+					List<UUID> batch = generator_.next(buffer_, 1,
+							TimeUnit.MINUTES);
 					for (UUID uuid : batch) {
 						queue_.put(uuid);
 					}
@@ -95,7 +96,7 @@ public class BufferedGenerator implements VersionOneGenerator {
 	@Override
 	public UUID next(long timeout, TimeUnit timeUnit)
 			throws InterruptedException {
-		List<UUID> result = next(UuidBatch.ONE, timeout, timeUnit);
+		List<UUID> result = next(1, timeout, timeUnit);
 		if (result == null || result.isEmpty()) {
 			return null;
 		}
@@ -106,15 +107,14 @@ public class BufferedGenerator implements VersionOneGenerator {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * eu.msmit.uuid.v1.VersionOneGenerator#next(eu.msmit.uuid.v1.UuidBatch,
-	 * long, java.util.concurrent.TimeUnit)
+	 * @see eu.msmit.uuid.v1.VersionOneGenerator#next(int, long,
+	 * java.util.concurrent.TimeUnit)
 	 */
 	@Override
-	public List<UUID> next(UuidBatch batch, long timeout, TimeUnit timeUnit)
+	public List<UUID> next(int batch, long timeout, TimeUnit timeUnit)
 			throws InterruptedException {
-		List<UUID> result = new ArrayList<UUID>(batch.getAmount());
-		for (int b = 0; b < batch.getAmount(); b++) {
+		List<UUID> result = new ArrayList<UUID>(batch);
+		for (int b = 0; b < batch; b++) {
 			UUID next = queue_.poll(timeout, timeUnit);
 			if (next == null) {
 				return null;

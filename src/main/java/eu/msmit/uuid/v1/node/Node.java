@@ -20,5 +20,9 @@ package eu.msmit.uuid.v1.node;
  * @since Feb 25, 2015
  */
 public interface Node {
+
+	/**
+	 * @return a 6 byte array describing the node
+	 */
 	byte[] bytes();
 }

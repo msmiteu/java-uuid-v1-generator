@@ -16,6 +16,7 @@
 package eu.msmit.uuid.v1.state;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import eu.msmit.uuid.v1.UUIDv1;
 
@@ -25,14 +26,40 @@ import eu.msmit.uuid.v1.UUIDv1;
  */
 public class ProcessState implements SharedState {
 
+	private static ReentrantLock LOCK = new ReentrantLock();
+	private static UUIDv1 STATE;
+
+	private static class State implements SharedLock {
+
+		@Override
+		public boolean isDirty() {
+			return false;
+		}
+
+		@Override
+		public UUIDv1 get() {
+			return STATE;
+		}
+	}
+
 	@Override
-	public SharedLock hold(long time, TimeUnit unit)
+	public SharedLock hold(long timeout, TimeUnit unit)
 			throws InterruptedException {
-		return null;
+		if (!LOCK.tryLock(timeout, unit)) {
+			return null;
+		}
+
+		return new State();
 	}
 
 	@Override
 	public boolean release(SharedLock lock, UUIDv1 uuid) {
-		return false;
+		if (!(lock instanceof State)) {
+			return false;
+		}
+
+		STATE = uuid;
+		LOCK.unlock();
+		return true;
 	}
 }
