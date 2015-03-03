@@ -21,10 +21,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import junit.framework.TestCase;
+
 import org.junit.Test;
 
-import junit.framework.TestCase;
-import eu.msmit.uuid.v1.UuidBatch;
 import eu.msmit.uuid.v1.VersionOneGenerator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.generator.BufferedGenerator;
@@ -49,7 +49,7 @@ public class TestGenerator extends TestCase {
 		VersionOneGenerator gen = new DefaultGenerator();
 		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
 
-		List<UUID> next = gen.next(new UuidBatch(testAmount), 1, TimeUnit.DAYS);
+		List<UUID> next = gen.next(testAmount, 1, TimeUnit.DAYS);
 		assertEquals(testAmount, next.size());
 
 		Set<UUID> uniqCheck = new HashSet<>();
@@ -62,7 +62,7 @@ public class TestGenerator extends TestCase {
 		VersionOneGenerator gen = new BufferedGenerator(new DefaultGenerator());
 		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
 
-		List<UUID> next = gen.next(new UuidBatch(testAmount), 1, TimeUnit.DAYS);
+		List<UUID> next = gen.next(testAmount, 1, TimeUnit.DAYS);
 		assertEquals(testAmount, next.size());
 
 		Set<UUID> uniqCheck = new HashSet<>();
