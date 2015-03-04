@@ -37,10 +37,8 @@ public class ProcessNode implements Node {
 		NodeUtil.digestProperties(digest, new String[] { "java.vm.version",
 				"java.vm.vendor", "java.vm.name" });
 		digest.update(getProcessId());
-		digest.update(ByteBuffer
-				.allocate(4)
-				.putInt(System.identityHashCode(ProcessNode.class
-						.getClassLoader())).array());
+		digest.update(NodeUtil.intToBytes(System.identityHashCode(ProcessNode.class
+						.getClassLoader())));
 		bytes_ = NodeUtil.makeFinal(digest);
 	}
 

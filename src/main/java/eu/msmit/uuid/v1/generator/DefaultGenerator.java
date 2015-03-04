@@ -26,6 +26,7 @@ import eu.msmit.uuid.v1.UUIDv1;
 import eu.msmit.uuid.v1.VersionOneGenerator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.clock.SystemClock;
+import eu.msmit.uuid.v1.node.Node;
 import eu.msmit.uuid.v1.node.SystemNode;
 import eu.msmit.uuid.v1.state.FileState;
 import eu.msmit.uuid.v1.state.SharedLock;
@@ -73,14 +74,22 @@ public class DefaultGenerator implements VersionOneGenerator {
 
 	private static SecureRandom RND = new SecureRandom();
 
-	private SharedState state_;
-	private Clock clock_;
-	private SystemNode node_;
+	private final SharedState state_;
+	private final Clock clock_;
+	private final Node node_;
 
 	public DefaultGenerator() {
-		state_ = new FileState();
-		clock_ = new SystemClock();
-		node_ = new SystemNode();
+		this(new FileState(), new SystemNode());
+	}
+
+	public DefaultGenerator(SharedState state, Node node) {
+		this(state, node, new SystemClock());
+	}
+
+	public DefaultGenerator(SharedState state, Node node, Clock clock) {
+		state_ = state;
+		clock_ = clock;
+		node_ = node;
 	}
 
 	/*

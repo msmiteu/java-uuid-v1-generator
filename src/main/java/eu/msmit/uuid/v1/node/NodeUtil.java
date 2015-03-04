@@ -15,6 +15,7 @@
  */
 package eu.msmit.uuid.v1.node;
 
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -26,7 +27,7 @@ import java.security.SecureRandom;
 class NodeUtil {
 	static SecureRandom RND = new SecureRandom();
 
-	static MessageDigest createDigest() {
+	public static MessageDigest createDigest() {
 		try {
 			return MessageDigest.getInstance("md5");
 		} catch (NoSuchAlgorithmException e) {
@@ -34,11 +35,7 @@ class NodeUtil {
 		}
 	}
 
-	/**
-	 * @param digest
-	 * @return
-	 */
-	static byte[] makeFinal(MessageDigest digest) {
+	public static byte[] makeFinal(MessageDigest digest) {
 		byte[] hash = digest.digest();
 		byte[] result = new byte[6];
 		System.arraycopy(hash, hash.length - result.length, result, 0,
@@ -47,18 +44,11 @@ class NodeUtil {
 		return result;
 	}
 
-	/**
-	 * @param node
-	 */
-	static void multicastBit(byte[] node) {
+	public static void multicastBit(byte[] node) {
 		node[0] |= 0x1;
 	}
 
-	/**
-	 * @param digest
-	 * @param properties
-	 */
-	static void digestProperties(MessageDigest digest, String[] properties) {
+	public static void digestProperties(MessageDigest digest, String[] properties) {
 		for (String property : properties) {
 			String val = System.getProperty(property);
 			if (val == null) {
@@ -66,5 +56,9 @@ class NodeUtil {
 			}
 			digest.update(val.getBytes());
 		}
+	}
+
+	public static byte[] intToBytes(int i) {
+		return ByteBuffer.allocate(4).putInt(i).array();
 	}
 }
