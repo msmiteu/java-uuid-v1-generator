@@ -16,6 +16,7 @@
 package eu.msmit.uuid.v1.state;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import eu.msmit.uuid.v1.UUIDv1;
@@ -26,10 +27,12 @@ import eu.msmit.uuid.v1.UUIDv1;
  */
 public class ProcessState implements SharedState {
 
-	private static ReentrantLock LOCK = new ReentrantLock();
-	private static UUIDv1 STATE;
+	private static ReentrantLock PROCESS_LOCK = new ReentrantLock();
+	private static AtomicReference<UUIDv1> PROCCESS_REF = new AtomicReference<UUIDv1>();
 
-	private static class State implements SharedLock {
+	private static class Lock implements SharedLock {
+
+		UUIDv1 uuid;
 
 		@Override
 		public boolean isDirty() {
@@ -38,28 +41,45 @@ public class ProcessState implements SharedState {
 
 		@Override
 		public UUIDv1 get() {
-			return STATE;
+			return uuid;
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see eu.msmit.uuid.v1.state.SharedState#hold(long,
+	 * java.util.concurrent.TimeUnit)
+	 */
 	@Override
 	public SharedLock hold(long timeout, TimeUnit unit)
 			throws InterruptedException {
-		if (!LOCK.tryLock(timeout, unit)) {
+		if (!PROCESS_LOCK.tryLock(timeout, unit)) {
 			return null;
 		}
 
-		return new State();
+		Lock lock = new Lock();
+		lock.uuid = PROCCESS_REF.get();
+		return lock;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * eu.msmit.uuid.v1.state.SharedState#release(eu.msmit.uuid.v1.state.SharedLock
+	 * , eu.msmit.uuid.v1.UUIDv1)
+	 */
 	@Override
 	public boolean release(SharedLock lock, UUIDv1 uuid) {
-		if (!(lock instanceof State)) {
+		if (!(lock instanceof Lock)) {
 			return false;
 		}
 
-		STATE = uuid;
-		LOCK.unlock();
-		return true;
+		try {
+			return PROCCESS_REF.compareAndSet(lock.get(), uuid);
+		} finally {
+			PROCESS_LOCK.unlock();
+		}
 	}
 }

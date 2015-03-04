@@ -19,7 +19,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -33,21 +32,55 @@ import eu.msmit.uuid.v1.state.SharedLock;
 import eu.msmit.uuid.v1.state.SharedState;
 
 /**
+ * Implements reference implementation of a UUID as described in
+ * http://www.ietf.org/rfc/rfc4122.txt
+ * 
+ * Underlying implementations and wrappers provide the necessary speed
+ * improvements suggested by the document.
+ * 
+ * <pre>
+ *    o  Obtain a system-wide global lock
+ * 
+ *    o  From a system-wide shared stable store (e.g., a file), read the
+ *       UUID generator state: the values of the timestamp, clock sequence,
+ *       and node ID used to generate the last UUID.
+ * 
+ *    o  Get the current time as a 60-bit count of 100-nanosecond intervals
+ *       since 00:00:00.00, 15 October 1582.
+ * 
+ *    o  Get the current node ID.
+ * 
+ *    o  If the state was unavailable (e.g., non-existent or corrupted), or
+ *       the saved node ID is different than the current node ID, generate
+ *       a random clock sequence value.
+ * 
+ *    o  If the state was available, but the saved timestamp is later than
+ *       the current timestamp, increment the clock sequence value.
+ * 
+ *    o  Save the state (current timestamp, clock sequence, and node ID)
+ *       back to the stable store.
+ * 
+ *    o  Release the global lock.
+ * 
+ *    o  Format a UUID from the current timestamp, clock sequence, and node
+ *       ID values according to the steps in Section 4.2.2.
+ * </pre>
+ * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Feb 25, 2015
  */
 public class DefaultGenerator implements VersionOneGenerator {
 
+	private static SecureRandom RND = new SecureRandom();
+
 	private SharedState state_;
 	private Clock clock_;
 	private SystemNode node_;
-	private Random rnd_;
 
 	public DefaultGenerator() {
 		state_ = new FileState();
 		clock_ = new SystemClock();
 		node_ = new SystemNode();
-		rnd_ = new SecureRandom();
 	}
 
 	/*
@@ -97,8 +130,6 @@ public class DefaultGenerator implements VersionOneGenerator {
 		try {
 			current = lock.get();
 
-			// For batch time distribution, create custom clock
-
 			for (int b = 0; b < batch; b++) {
 				long timestamp = clock_.getTimestamp(time, timeUnit);
 
@@ -129,7 +160,8 @@ public class DefaultGenerator implements VersionOneGenerator {
 	}
 
 	/**
-	 * Create a new UUID with the given timestamp
+	 * Create a new UUID with the given timestamp. This method could be used
+	 * solely but will then bypass all the instructions put in the RFC.
 	 * 
 	 * @param timestamp
 	 *            the timestamp
@@ -138,7 +170,7 @@ public class DefaultGenerator implements VersionOneGenerator {
 	private UUIDv1 newUUID(long timestamp) {
 		UUIDv1 uuid = new UUIDv1();
 		uuid.changeNode(node_);
-		uuid.randomClockSequence(rnd_);
+		uuid.randomClockSequence(RND);
 		uuid.changeTime(timestamp);
 		return uuid;
 	}

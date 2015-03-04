@@ -172,6 +172,10 @@ public class FileState implements SharedState {
 		try {
 			lock.channel.position(0);
 			lock.channel.truncate(0);
+
+			if (uuid == null) {
+				uuid = state.get();
+			}
 			if (uuid != null) {
 				format_.write(uuid, Channels.newOutputStream(lock.channel));
 			}
