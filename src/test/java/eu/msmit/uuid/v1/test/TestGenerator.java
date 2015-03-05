@@ -25,7 +25,8 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import eu.msmit.uuid.v1.VersionOneGenerator;
+import eu.msmit.uuid.v1.UUIDv1;
+import eu.msmit.uuid.v1.UUIDv1Generator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.generator.BufferedGenerator;
 import eu.msmit.uuid.v1.generator.DefaultGenerator;
@@ -38,15 +39,27 @@ public class TestGenerator extends TestCase {
 
 	@Test
 	public void testGenerateNext() throws Exception {
-		VersionOneGenerator gen = new DefaultGenerator();
+		UUIDv1Generator gen = new DefaultGenerator();
 		UUID next = gen.next();
 		assertNotNull(next);
 		System.out.println(next);
 	}
 
 	@Test
+	public void testSpeed() throws Exception {
+		long ms = System.currentTimeMillis();
+		UUIDv1Generator generator = UUIDv1Generator.getInstance();
+
+		for (int i = 0; i < 10000; i++) {
+			generator.next();
+		}
+
+		assertFalse((System.currentTimeMillis() - ms) > 300);
+	}
+
+	@Test
 	public void testGenerateBatch() throws Exception {
-		VersionOneGenerator gen = new DefaultGenerator();
+		UUIDv1Generator gen = new DefaultGenerator();
 		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
 
 		List<UUID> next = gen.next(testAmount, 1, TimeUnit.DAYS);
@@ -59,7 +72,7 @@ public class TestGenerator extends TestCase {
 
 	@Test
 	public void testGenerateBufferBatch() throws Exception {
-		VersionOneGenerator gen = new BufferedGenerator(new DefaultGenerator());
+		UUIDv1Generator gen = new BufferedGenerator(new DefaultGenerator());
 		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
 
 		List<UUID> next = gen.next(testAmount, 1, TimeUnit.DAYS);

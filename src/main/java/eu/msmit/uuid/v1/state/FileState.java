@@ -20,13 +20,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeoutException;
 
+import eu.msmit.uuid.v1.UUIDError;
 import eu.msmit.uuid.v1.UUIDv1;
 
 /**
@@ -88,62 +94,30 @@ public class FileState implements SharedState {
 	 */
 	public SharedLock hold(long timeout, TimeUnit unit)
 			throws InterruptedException {
-		final AtomicReference<Lock> found = new AtomicReference<>();
-		final CountDownLatch latch = new CountDownLatch(1);
 
-		Thread acquireThread = new Thread() {
-			@Override
-			public void run() {
-				Lock lock = new Lock();
-				int backoff = 0;
+		Lock lock = new Lock();
 
-				try {
-					lock.raf = new RandomAccessFile(file_, "rw");
-				} catch (FileNotFoundException e) {
-					latch.countDown();
-					return;
-				}
-
-				lock.channel = lock.raf.getChannel();
-
-				while (!Thread.interrupted()) {
-					try {
-						lock.flock = lock.channel.lock();
-						found.set(lock);
-						latch.countDown();
-						break;
-
-					} catch (OverlappingFileLockException e) {
-						// move to wait
-					} catch (IOException e) {
-						// transfer exception to outer result
-						break;
-					}
-
-					try {
-						Thread.sleep(++backoff * 10);
-					} catch (InterruptedException e) {
-						break;
-					}
-				}
-
-				// Too late, release the lock again
-				if (latch.getCount() != 0) {
-					releaseLock(lock);
-					latch.countDown();
-				}
-			}
-		};
-
-		acquireThread.start();
-
-		if (!latch.await(timeout, unit)) {
-			acquireThread.interrupt();
-			latch.await();
-			return null;
+		try {
+			lock.raf = new RandomAccessFile(file_, "rw");
+		} catch (FileNotFoundException e) {
+			throw new UUIDError("State file could not be created", e);
 		}
 
-		Lock lock = found.get();
+		lock.channel = lock.raf.getChannel();
+
+		try {
+			lock.flock = lock.channel.tryLock();
+		} catch (OverlappingFileLockException e) {
+			lock.flock = null;
+		} catch (IOException e) {
+			throw new UUIDError("Could not lock state file", e);
+		}
+
+		if (lock.flock == null) {
+			if (!awaitLock(lock, timeout, unit)) {
+				return null;
+			}
+		}
 
 		try {
 			lock.state = format_.read(Channels.newInputStream(lock.channel));
@@ -152,6 +126,48 @@ public class FileState implements SharedState {
 		}
 
 		return lock;
+	}
+
+	private boolean awaitLock(final Lock lock, long timeout, TimeUnit unit)
+			throws InterruptedException {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+
+		try {
+			Future<FileLock> future = executor.submit(new Callable<FileLock>() {
+				@Override
+				public FileLock call() throws Exception {
+					FileLock flock = null;
+					int backoff = 0;
+
+					while (!Thread.interrupted() && flock == null) {
+						try {
+							flock = lock.channel.lock();
+						} catch (OverlappingFileLockException e) {
+							// move to wait
+						}
+
+						try {
+							Thread.sleep(++backoff * 10);
+						} catch (InterruptedException e) {
+							break;
+						}
+					}
+
+					return flock;
+				}
+			});
+
+			try {
+				lock.flock = future.get(timeout, unit);
+				return true;
+			} catch (ExecutionException | TimeoutException e) {
+				releaseLock(lock);
+				return false;
+			}
+		} finally {
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.MINUTES);
+		}
 	}
 
 	/*

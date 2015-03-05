@@ -22,7 +22,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
-import eu.msmit.uuid.v1.VersionOneGenerator;
+import eu.msmit.uuid.v1.UUIDv1Generator;
 
 /**
  * Buffers UUID's in a queue so burst generation can be done more efficiently.
@@ -30,7 +30,7 @@ import eu.msmit.uuid.v1.VersionOneGenerator;
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 2, 2015
  */
-public class BufferedGenerator implements VersionOneGenerator {
+public class BufferedGenerator extends UUIDv1Generator {
 
 	public static final int DEFAULT_BUFFER_SIZE = 1024;
 
@@ -56,14 +56,14 @@ public class BufferedGenerator implements VersionOneGenerator {
 	};
 
 	private final BlockingQueue<UUID> queue_;
-	private final VersionOneGenerator generator_;
+	private final UUIDv1Generator generator_;
 	private final int buffer_;
 
-	public BufferedGenerator(VersionOneGenerator generator) {
+	public BufferedGenerator(UUIDv1Generator generator) {
 		this(generator, DEFAULT_BUFFER_SIZE);
 	}
 
-	public BufferedGenerator(VersionOneGenerator generator, int buffer) {
+	public BufferedGenerator(UUIDv1Generator generator, int buffer) {
 		try {
 			queue_ = new LinkedBlockingDeque<UUID>(buffer);
 			buffer_ = buffer;

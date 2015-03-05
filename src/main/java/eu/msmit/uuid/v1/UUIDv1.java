@@ -25,7 +25,6 @@ import eu.msmit.uuid.v1.node.Node;
  * @since Feb 25, 2015
  */
 public class UUIDv1 {
-
 	private static final long MAX_CLOCK_SEQUENCE = 0x3FFFL;
 
 	private long msb_;

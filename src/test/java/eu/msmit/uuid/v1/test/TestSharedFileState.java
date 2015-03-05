@@ -16,7 +16,10 @@
 package eu.msmit.uuid.v1.test;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 
@@ -44,9 +47,69 @@ public class TestSharedFileState extends TestCase {
 	}
 
 	@Test
+	public void testLock() throws Exception {
+		final File tmpFile = File.createTempFile("uuid.", ".test");
+		tmpFile.deleteOnExit();
+
+		ExecutorService executor = Executors.newFixedThreadPool(3);
+		
+		// Locks the file for 5 secs
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					FileState file = new FileState(tmpFile);
+					SharedLock state = file.hold(1, TimeUnit.MILLISECONDS);
+					assertNotNull(state);
+					Thread.sleep(500);
+					file.release(state, state.get());
+				} catch (Exception e) {
+					assertNull(e);
+				}
+			}
+		});
+		
+		Thread.sleep(50);
+
+		// Should not result in lock
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					FileState file = new FileState(tmpFile);
+					SharedLock state = file.hold(100, TimeUnit.MILLISECONDS);
+					assertNull(state);
+				} catch (Exception e) {
+					assertNull(e);
+				}
+			}
+		});
+
+		Thread.sleep(50);
+
+		// Must result in lock
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					FileState file = new FileState(tmpFile);
+					SharedLock state = file.hold(6, TimeUnit.SECONDS);
+					assertNotNull(state);
+					file.release(state, state.get());
+				} catch (Exception e) {
+					assertNull(e);
+				}
+			}
+		});
+
+		executor.shutdown();
+		executor.awaitTermination(10, TimeUnit.SECONDS);
+	}
+
+	@Test
 	public void testStateRecover() throws Exception {
 		UUIDv1 uuid = new UUIDv1("9af46100-c10d-11e4-9c16-255acb2167b8");
-		
+
 		File tmpFile = File.createTempFile("uuid.", ".test");
 		tmpFile.deleteOnExit();
 
@@ -54,7 +117,7 @@ public class TestSharedFileState extends TestCase {
 		SharedLock state = file.hold(30, TimeUnit.SECONDS);
 		assertNotNull(state);
 		file.release(state, uuid);
-		
+
 		state = file.hold(30, TimeUnit.SECONDS);
 		assertNotNull(state);
 		assertEquals(uuid, state.get());

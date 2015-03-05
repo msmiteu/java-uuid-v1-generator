@@ -65,6 +65,7 @@ public class SystemNode implements Node {
 		try {
 			digest.update(InetAddress.getLocalHost().getHostName().getBytes());
 		} catch (UnknownHostException e) {
+			digest.update("localhost".getBytes());
 		}
 	}
 

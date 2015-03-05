@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import eu.msmit.uuid.v1.UUIDv1;
-import eu.msmit.uuid.v1.VersionOneGenerator;
+import eu.msmit.uuid.v1.UUIDv1Generator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.clock.SystemClock;
 import eu.msmit.uuid.v1.node.Node;
@@ -70,7 +70,7 @@ import eu.msmit.uuid.v1.state.SharedState;
  * @author Marijn Smit (info@msmit.eu)
  * @since Feb 25, 2015
  */
-public class DefaultGenerator implements VersionOneGenerator {
+public class DefaultGenerator extends UUIDv1Generator {
 
 	private static SecureRandom RND = new SecureRandom();
 
