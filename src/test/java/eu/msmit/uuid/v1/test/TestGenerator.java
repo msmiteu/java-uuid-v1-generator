@@ -25,7 +25,6 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import eu.msmit.uuid.v1.UUIDv1;
 import eu.msmit.uuid.v1.UUIDv1Generator;
 import eu.msmit.uuid.v1.clock.Clock;
 import eu.msmit.uuid.v1.generator.BufferedGenerator;

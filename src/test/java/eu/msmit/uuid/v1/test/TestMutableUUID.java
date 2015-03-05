@@ -17,9 +17,10 @@ package eu.msmit.uuid.v1.test;
 
 import java.util.UUID;
 
+import junit.framework.TestCase;
+
 import org.junit.Test;
 
-import junit.framework.TestCase;
 import eu.msmit.uuid.v1.UUIDv1;
 
 /**
