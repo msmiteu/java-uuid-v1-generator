@@ -108,7 +108,8 @@ public class TestGenerator extends TestCase {
 		Generator[] gen = new Generator[] { new DefaultGenerator(),
 				new ParallelGenerator() };
 		for (Generator g : gen) {
-			g.next();
+			for (int w = 0; w < 100; w++)
+				g.next();
 
 			long ns = System.nanoTime();
 			int i = 0;

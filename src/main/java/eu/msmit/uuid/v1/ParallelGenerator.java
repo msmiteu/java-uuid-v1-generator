@@ -26,7 +26,7 @@ import java.util.UUID;
  * @since Mar 25, 2015
  */
 public class ParallelGenerator implements Generator {
-	private static final int DEFAULT_CONCURRENCY = 16;
+	private static final int DEFAULT_CONCURRENCY = 32;
 
 	private final Generator[] pool_;
 	private final int concurrency_;

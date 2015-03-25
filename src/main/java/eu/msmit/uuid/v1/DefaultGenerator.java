@@ -105,31 +105,24 @@ public class DefaultGenerator implements Generator {
 	 */
 	public UUID next() {
 		synchronized (this) {
-			return synchronizedNext();
-		}
-	}
+			UUID current = prevUUID_;
+			try {
+				long timestamp = nextTimestamp();
 
-	/**
-	 * @return the next UUID, guarded by synchronization
-	 */
-	private UUID synchronizedNext() {
-		UUID current = prevUUID_;
-		try {
-			long timestamp = nextTimestamp();
-
-			if (current == null || current.node() != node_) {
-				current = newUUID(timestamp);
-			} else {
-				if (current.timestamp() >= timestamp) {
-					current = incrementClockSequence(current, timestamp);
+				if (current == null || current.node() != node_) {
+					current = newUUID(timestamp);
 				} else {
-					current = incrementTime(current, timestamp);
+					if (current.timestamp() >= timestamp) {
+						current = incrementClockSequence(current, timestamp);
+					} else {
+						current = incrementTime(current, timestamp);
+					}
 				}
-			}
 
-			return current;
-		} finally {
-			prevUUID_ = current;
+				return current;
+			} finally {
+				prevUUID_ = current;
+			}
 		}
 	}
 
