@@ -43,7 +43,7 @@ public class UUIDv1 {
 	/**
 	 * @return the system generator
 	 */
-	public static Generator getInstance() {
+	public static Generator getGenerator() {
 		return GENERATOR;
 	}
 

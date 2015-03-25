@@ -126,7 +126,7 @@ public class TestGenerator extends TestCase {
 
 	@Test
 	public void testGenerateBatch() throws Exception {
-		Generator gen = UUIDv1.getInstance();
+		Generator gen = UUIDv1.getGenerator();
 		int testAmount = (int) (INTERVALS_PER_MS * 10);
 
 		Set<UUID> uniqCheck = new HashSet<UUID>();
