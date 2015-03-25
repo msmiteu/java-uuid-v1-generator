@@ -15,14 +15,11 @@
  */
 package eu.msmit.uuid.v1.test;
 
-import java.util.concurrent.TimeUnit;
-
 import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import eu.msmit.uuid.v1.clock.Clock;
-import eu.msmit.uuid.v1.clock.SystemClock;
+import eu.msmit.uuid.v1.DefaultGenerator;
 
 /**
  * @author Marijn Smit (info@msmit.eu)
@@ -30,13 +27,23 @@ import eu.msmit.uuid.v1.clock.SystemClock;
  */
 public class TestSystemClock extends TestCase {
 
+	private static long INTERVALS_PER_MS = 10000L;
+
+	private class ClockTester extends DefaultGenerator {
+
+		@Override
+		public long nextTimestamp() {
+			return super.nextTimestamp();
+		}
+	}
+
 	@Test
 	public void testOverruns() throws Exception {
-		SystemClock clock = new SystemClock();
+		ClockTester tester = new ClockTester();
 		long prev = 0;
 
-		for (int i = 0; i < Clock.INTERVALS_PER_MS * 100; i++) {
-			long ts = clock.getTimestamp(1, TimeUnit.MINUTES);
+		for (int i = 0; i < INTERVALS_PER_MS * 100; i++) {
+			long ts = tester.nextTimestamp();
 
 			if (ts <= prev) {
 				String message = "ts=" + ts + ", prev=" + prev + ", delta="

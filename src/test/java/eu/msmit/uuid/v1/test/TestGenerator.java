@@ -16,19 +16,17 @@
 package eu.msmit.uuid.v1.test;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import eu.msmit.uuid.v1.UUIDv1Generator;
-import eu.msmit.uuid.v1.clock.Clock;
-import eu.msmit.uuid.v1.generator.BufferedGenerator;
-import eu.msmit.uuid.v1.generator.DefaultGenerator;
+import eu.msmit.uuid.v1.DefaultGenerator;
+import eu.msmit.uuid.v1.Generator;
+import eu.msmit.uuid.v1.ParallelGenerator;
+import eu.msmit.uuid.v1.UUIDv1;
 
 /**
  * @author Marijn Smit (info@msmit.eu)
@@ -36,49 +34,106 @@ import eu.msmit.uuid.v1.generator.DefaultGenerator;
  */
 public class TestGenerator extends TestCase {
 
+	private static long INTERVALS_PER_MS = 10000L;
+
+	private class UUIDTester extends DefaultGenerator {
+
+		@Override
+		public UUID createUUID(long timestamp, long node, int clock) {
+			return super.createUUID(timestamp, node, clock);
+		}
+
+	}
+
+	@Test
+	public void testGenerateUUID() throws Exception {
+		UUIDTester test = new UUIDTester();
+		long timestamp = System.currentTimeMillis();
+		long node = System.currentTimeMillis() & 0xFFFFFFFFFFFFL;
+		int clock = 16383;
+
+		UUID uuid = test.createUUID(timestamp, node, clock);
+
+		assertEquals(timestamp, uuid.timestamp());
+		assertEquals(node, uuid.node());
+		assertEquals(clock, uuid.clockSequence());
+		assertEquals(2, uuid.variant());
+		assertEquals(1, uuid.version());
+
+		clock = 0;
+		uuid = test.createUUID(timestamp, node, clock);
+
+		assertEquals(timestamp, uuid.timestamp());
+		assertEquals(node, uuid.node());
+		assertEquals(clock, uuid.clockSequence());
+		assertEquals(2, uuid.variant());
+		assertEquals(1, uuid.version());
+
+		timestamp = 0;
+		node = 0;
+		uuid = test.createUUID(timestamp, node, clock);
+
+		assertEquals(timestamp, uuid.timestamp());
+		assertEquals(node, uuid.node());
+		assertEquals(clock, uuid.clockSequence());
+		assertEquals(2, uuid.variant());
+		assertEquals(1, uuid.version());
+	}
+
 	@Test
 	public void testGenerateNext() throws Exception {
-		UUIDv1Generator gen = new DefaultGenerator();
-		UUID next = gen.next();
+		UUID next = new DefaultGenerator().next();
 		assertNotNull(next);
 		System.out.println(next);
 	}
 
 	@Test
 	public void testSpeed() throws Exception {
-		long ms = System.currentTimeMillis();
-		UUIDv1Generator generator = UUIDv1Generator.getInstance();
+		Generator generator = new DefaultGenerator();
+		generator.next();
 
-		for (int i = 0; i < 10000; i++) {
+		long ns = System.nanoTime();
+		int i = 0;
+		for (; i < 10000; i++) {
 			generator.next();
 		}
 
-		assertFalse((System.currentTimeMillis() - ms) > 300);
+		long time = (System.nanoTime() - ns) / i;
+		System.out.println("Generation speed=" + time + "ns per UUID");
+		assertFalse(time > 2000);
+	}
+
+	@Test
+	public void testCompareSpeed() throws Exception {
+		Generator[] gen = new Generator[] { new DefaultGenerator(),
+				new ParallelGenerator() };
+		for (Generator g : gen) {
+			g.next();
+
+			long ns = System.nanoTime();
+			int i = 0;
+			for (; i < 10000; i++) {
+				g.next();
+			}
+
+			long time = (System.nanoTime() - ns) / i;
+			System.out.println("Generation speed=" + time + "ns per UUID (" + g
+					+ ")");
+			assertFalse(time > 2000);
+		}
 	}
 
 	@Test
 	public void testGenerateBatch() throws Exception {
-		UUIDv1Generator gen = new DefaultGenerator();
-		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
+		Generator gen = UUIDv1.getInstance();
+		int testAmount = (int) (INTERVALS_PER_MS * 10);
 
-		List<UUID> next = gen.next(testAmount, 1, TimeUnit.DAYS);
-		assertEquals(testAmount, next.size());
+		Set<UUID> uniqCheck = new HashSet<UUID>();
 
-		Set<UUID> uniqCheck = new HashSet<>();
-		uniqCheck.addAll(next);
+		for (int i = 0; i < testAmount; i++)
+			uniqCheck.add(gen.next());
+
 		assertEquals(testAmount, uniqCheck.size());
 	}
 
-	@Test
-	public void testGenerateBufferBatch() throws Exception {
-		UUIDv1Generator gen = new BufferedGenerator(new DefaultGenerator());
-		int testAmount = (int) (Clock.INTERVALS_PER_MS * 10);
-
-		List<UUID> next = gen.next(testAmount, 1, TimeUnit.DAYS);
-		assertEquals(testAmount, next.size());
-
-		Set<UUID> uniqCheck = new HashSet<>();
-		uniqCheck.addAll(next);
-		assertEquals(testAmount, uniqCheck.size());
-	}
 }
