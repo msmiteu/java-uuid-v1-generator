@@ -95,7 +95,7 @@ public class TestGenerator extends TestCase {
 
 			long ns = System.nanoTime();
 			int i = 0;
-			for (; i < 1000; i++) {
+			for (; i < 10000; i++) {
 				g.next();
 			}
 

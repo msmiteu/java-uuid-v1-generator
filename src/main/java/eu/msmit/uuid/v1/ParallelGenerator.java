@@ -18,9 +18,8 @@ package eu.msmit.uuid.v1;
 import java.util.UUID;
 
 /**
- * The near parallel generator synchronizes only on a pointer increment that
- * points to the current generator. Performs worse than {@link DefaultGenerator}
- * on a single thread, but better on multiple threads.
+ * Will rotate between a pool of {@link DefaultGenerator} instances. This will
+ * improve speed, but also create more random results.
  * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 25, 2015

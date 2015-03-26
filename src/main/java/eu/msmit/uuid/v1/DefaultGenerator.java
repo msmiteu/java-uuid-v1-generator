@@ -20,45 +20,7 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * Implements reference implementation of a UUID as described in
- * http://www.ietf.org/rfc/rfc4122.txt
- * 
- * Underlying implementations and wrappers provide the necessary speed
- * improvements suggested by the document.
- * 
- * For example the {@link ParallelGenerator} will provide unprecedented speed.
- * 
- * For this implementation, 'system' is considered to be a Java process with a
- * Generator instance. Shared stable store would be process memory in this case.
- * 
- * 
- * <pre>
- *    o  Obtain a system-wide global lock
- * 
- *    o  From a system-wide shared stable store (e.g., a file), read the
- *       UUID generator state: the values of the timestamp, clock sequence,
- *       and node ID used to generate the last UUID.
- * 
- *    o  Get the current time as a 60-bit count of 100-nanosecond intervals
- *       since 00:00:00.00, 15 October 1582.
- * 
- *    o  Get the current node ID.
- * 
- *    o  If the state was unavailable (e.g., non-existent or corrupted), or
- *       the saved node ID is different than the current node ID, generate
- *       a random clock sequence value.
- * 
- *    o  If the state was available, but the saved timestamp is later than
- *       the current timestamp, increment the clock sequence value.
- * 
- *    o  Save the state (current timestamp, clock sequence, and node ID)
- *       back to the stable store.
- * 
- *    o  Release the global lock.
- * 
- *    o  Format a UUID from the current timestamp, clock sequence, and node
- *       ID values according to the steps in Section 4.2.2.
- * </pre>
+ * The base {@link UUID} generator implementation.
  * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 24, 2015
