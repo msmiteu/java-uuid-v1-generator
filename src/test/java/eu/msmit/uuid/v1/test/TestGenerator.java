@@ -37,12 +37,10 @@ public class TestGenerator extends TestCase {
 	private static long INTERVALS_PER_MS = 10000L;
 
 	private class UUIDTester extends DefaultGenerator {
-
 		@Override
 		public UUID createUUID(long timestamp, long node, int clock) {
 			return super.createUUID(timestamp, node, clock);
 		}
-
 	}
 
 	@Test
@@ -88,32 +86,16 @@ public class TestGenerator extends TestCase {
 	}
 
 	@Test
-	public void testSpeed() throws Exception {
-		Generator generator = new DefaultGenerator();
-		generator.next();
-
-		long ns = System.nanoTime();
-		int i = 0;
-		for (; i < 10000; i++) {
-			generator.next();
-		}
-
-		long time = (System.nanoTime() - ns) / i;
-		System.out.println("Generation speed=" + time + "ns per UUID");
-		assertFalse(time > 2000);
-	}
-
-	@Test
 	public void testCompareSpeed() throws Exception {
 		Generator[] gen = new Generator[] { new DefaultGenerator(),
 				new ParallelGenerator() };
 		for (Generator g : gen) {
-			for (int w = 0; w < 100; w++)
+			for (int w = 0; w < 1000; w++)
 				g.next();
 
 			long ns = System.nanoTime();
 			int i = 0;
-			for (; i < 10000; i++) {
+			for (; i < 1000; i++) {
 				g.next();
 			}
 

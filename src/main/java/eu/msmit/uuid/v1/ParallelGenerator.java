@@ -26,11 +26,11 @@ import java.util.UUID;
  * @since Mar 25, 2015
  */
 public class ParallelGenerator implements Generator {
-	private static final int DEFAULT_CONCURRENCY = 32;
+	private static final int DEFAULT_CONCURRENCY = 4;
 
 	private final Generator[] pool_;
 	private final int concurrency_;
-	private int pointer_ = 0;
+	private volatile int pointer_ = 0;
 
 	/**
 	 * Create a new {@link ParallelGenerator} with {@link #DEFAULT_CONCURRENCY}
@@ -46,20 +46,7 @@ public class ParallelGenerator implements Generator {
 	 *            anywhere above zero
 	 */
 	public ParallelGenerator(int concurrency) {
-		this(concurrency, DefaultGenerator.class);
-	}
-
-	/**
-	 * Create a generator with the given concurrency and generator class.
-	 * 
-	 * @param concurrency
-	 *            anywhere above zero
-	 * @param generatorClass
-	 *            the generator class
-	 */
-	public <T extends Generator> ParallelGenerator(int concurrency,
-			Class<T> generatorClass) {
-		if (concurrency <= 0 || generatorClass == null) {
+		if (concurrency <= 0) {
 			throw new IllegalArgumentException();
 		}
 
@@ -68,7 +55,7 @@ public class ParallelGenerator implements Generator {
 
 		for (int p = 0; p < concurrency; p++) {
 			try {
-				pool_[p] = (Generator) generatorClass.newInstance();
+				pool_[p] = new DefaultGenerator();
 			} catch (Exception e) {
 				throw new Error(e);
 			}

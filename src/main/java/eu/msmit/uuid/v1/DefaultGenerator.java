@@ -100,8 +100,10 @@ public class DefaultGenerator implements Generator {
 		node_ = node.getValue();
 	}
 
-	/**
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see eu.msmit.uuid.v1.Generator#next()
 	 */
 	public UUID next() {
 		synchronized (this) {
