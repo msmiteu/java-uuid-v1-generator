@@ -95,14 +95,13 @@ public class TestGenerator extends TestCase {
 
 			long ns = System.nanoTime();
 			int i = 0;
-			for (; i < 10000; i++) {
+			for (; i < 1000000; i++) {
 				g.next();
 			}
 
 			long time = (System.nanoTime() - ns) / i;
 			System.out.println("Generation speed=" + time + "ns per UUID (" + g
 					+ ")");
-			assertFalse(time > 10000);
 		}
 	}
 
