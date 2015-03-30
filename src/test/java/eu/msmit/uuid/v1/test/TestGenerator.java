@@ -102,7 +102,7 @@ public class TestGenerator extends TestCase {
 			long time = (System.nanoTime() - ns) / i;
 			System.out.println("Generation speed=" + time + "ns per UUID (" + g
 					+ ")");
-			assertFalse(time > 2000);
+			assertFalse(time > 10000);
 		}
 	}
 
