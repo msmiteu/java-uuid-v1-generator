@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>eu.msmit.uuid</groupId>
 	<artifactId>uuid-v1-generator</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.2-SNAPSHOT</version>
 	<name>UUID Generator</name>
 	<build>
 		<plugins>
