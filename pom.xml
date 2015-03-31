@@ -31,7 +31,7 @@
 				<version>2.5.1</version>
 				<configuration>
 					<pushChanges>false</pushChanges>
-					<tagNameFormat>release-@{version}</tagNameFormat>
+					<tagNameFormat>@{version}</tagNameFormat>
 					<autoVersionSubmodules>true</autoVersionSubmodules>
 				</configuration>
 			</plugin>
