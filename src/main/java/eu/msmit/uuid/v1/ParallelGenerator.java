@@ -15,6 +15,8 @@
  */
 package eu.msmit.uuid.v1;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -52,9 +54,15 @@ public class ParallelGenerator implements Generator {
 		pool_ = new Generator[concurrency];
 		concurrency_ = concurrency;
 
+		Set<Long> nodes = new HashSet<Long>();
 		for (int p = 0; p < concurrency; p++) {
 			try {
 				pool_[p] = new DefaultGenerator();
+
+				if (!nodes.add(pool_[p].next().node())) {
+					throw new Exception("Duplicate node error in "
+							+ getClass().getSimpleName());
+				}
 			} catch (Exception e) {
 				throw new Error(e);
 			}

@@ -150,25 +150,25 @@ public class DefaultGenerator implements Generator {
 	protected long nextTimestamp() {
 		long now = System.currentTimeMillis();
 
-		synchronized (this) {
-			if (tsnow_ != now) {
-				tsnow_ = now;
-				tsoff_ = 0;
-			}
-
-			//
-			if (tsoff_ >= INTERVALS_PER_MS) {
-				tsnow_ = awaitNextTimestamp(tsnow_);
-				tsoff_ = 0;
-			}
-
-			// Set time as current time millis plus offset times 100 ns ticks
-			long currentTime = (UUID_EPOCH_TO_UTC_EPOCH_MS + tsnow_)
-					* INTERVALS_PER_MS;
-
-			// Return the uuid time plus the artifical tick incremented
-			return (currentTime + tsoff_++);
+		// No longer within the current ms.
+		// Eagerly following the clock!
+		if (tsnow_ != now) {
+			tsnow_ = now;
+			tsoff_ = RANDOM.nextInt((int) INTERVALS_PER_MS);
 		}
+
+		// We are racing, move to next timestamp. Offset will start at 0
+		if (tsoff_ >= INTERVALS_PER_MS) {
+			tsnow_ = awaitNextTimestamp(tsnow_);
+			tsoff_ = 0;
+		}
+
+		// Set time as current time millis plus offset times 100 ns ticks
+		long currentTime = (UUID_EPOCH_TO_UTC_EPOCH_MS + tsnow_)
+				* INTERVALS_PER_MS;
+
+		// Return the uuid time plus the artifical tick incremented
+		return (currentTime + tsoff_++);
 	}
 
 	/**

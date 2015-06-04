@@ -15,6 +15,7 @@
  */
 package eu.msmit.uuid.v1.test;
 
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -86,6 +87,16 @@ public class TestGenerator extends TestCase {
 	}
 
 	@Test
+	public void testSecureRandom() throws Exception {
+		SecureRandom random = new SecureRandom();
+		for (int t = 0; t < 100000; t++) {
+			long v = random.nextInt() % 10000L;
+			v = v >= 0 ? v : -v;
+			assertTrue(v + " < 0", v >= 0);
+		}
+	}
+
+	@Test
 	public void testCompareSpeed() throws Exception {
 		Generator[] gen = new Generator[] { new DefaultGenerator(),
 				new ParallelGenerator() };
@@ -101,7 +112,8 @@ public class TestGenerator extends TestCase {
 
 			long time = (System.nanoTime() - ns) / i;
 			System.out.println("Generation speed=" + time + "ns per UUID (" + g
-					+ ")");
+					+ ") that is " + (int) (1000000000 / time)
+					+ " UUID's per second");
 		}
 	}
 
