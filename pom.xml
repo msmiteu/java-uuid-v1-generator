@@ -44,12 +44,6 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.mapdb</groupId>
-			<artifactId>mapdb</artifactId>
-			<version>1.0.7</version>
-			<scope>provided</scope>
-		</dependency>
 	</dependencies>
 	<scm>
 		<connection>scm:git:https://git.msmit.eu/r/utils/uuid-v1-generator.git</connection>
