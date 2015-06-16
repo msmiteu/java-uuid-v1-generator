@@ -15,6 +15,8 @@
  */
 package eu.msmit.uuid.v1.test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
@@ -100,6 +102,7 @@ public class TestGenerator extends TestCase {
 	public void testCompareSpeed() throws Exception {
 		Generator[] gen = new Generator[] { new DefaultGenerator(),
 				new ParallelGenerator() };
+		System.setErr(new PrintStream(new ByteArrayOutputStream()));
 		for (Generator g : gen) {
 			for (int w = 0; w < 1000; w++)
 				g.next();

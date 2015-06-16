@@ -60,6 +60,8 @@ public class DefaultGenerator implements Generator {
 
 	public DefaultGenerator(Node node) {
 		node_ = node.getValue();
+		tsnow_ = System.currentTimeMillis();
+		tsoff_ = 1;
 	}
 
 	/*
@@ -148,27 +150,36 @@ public class DefaultGenerator implements Generator {
 	 * @return the next timestamp, unequal to the previous.
 	 */
 	protected long nextTimestamp() {
-		long now = System.currentTimeMillis();
+		long now;
+
+		// We are racing, move to next timestamp. Offset will start at 0
+		if (tsoff_ < 0) {
+			now = awaitNextTimestamp(tsnow_);
+		} else {
+			now = System.currentTimeMillis();
+		}
 
 		// No longer within the current ms.
 		// Eagerly following the clock!
-		if (tsnow_ != now) {
+		// Gap is minimal 0 milliseconds max 60 sec.
+		if (now > tsnow_) {
+			long gap = INTERVALS_PER_MS
+					* Math.min(Math.max(0, now - tsnow_), 60000);
+			tsoff_ = RANDOM.nextInt((int) gap);
 			tsnow_ = now;
-			tsoff_ = RANDOM.nextInt((int) INTERVALS_PER_MS);
-		}
-
-		// We are racing, move to next timestamp. Offset will start at 0
-		if (tsoff_ >= INTERVALS_PER_MS) {
-			tsnow_ = awaitNextTimestamp(tsnow_);
-			tsoff_ = 0;
 		}
 
 		// Set time as current time millis plus offset times 100 ns ticks
 		long currentTime = (UUID_EPOCH_TO_UTC_EPOCH_MS + tsnow_)
 				* INTERVALS_PER_MS;
 
-		// Return the uuid time plus the artifical tick incremented
-		return (currentTime + tsoff_++);
+		// When skewing time..
+		if (now <= tsnow_) {
+			return -currentTime;
+		}
+
+		// Return the uuid time minus the artifical tick decremented
+		return (currentTime - tsoff_--);
 	}
 
 	/**
