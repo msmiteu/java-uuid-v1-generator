@@ -26,6 +26,7 @@ import java.util.UUID;
  * @since Mar 24, 2015
  */
 public class DefaultGenerator implements Generator {
+
 	/**
 	 * For clock sequence and -don't care- bits
 	 */
@@ -48,8 +49,12 @@ public class DefaultGenerator implements Generator {
 	 */
 	private static long INTERVALS_PER_MS = 10000L;
 
-	private final long node_;
+	/**
+	 * Maximum size of the gap is ms
+	 */
+	private static final int MAX_GAP_SIZE = 50;
 
+	private final long node_;
 	private long tsnow_;
 	private long tsoff_;
 	private UUID prevUUID_;
@@ -60,8 +65,7 @@ public class DefaultGenerator implements Generator {
 
 	public DefaultGenerator(Node node) {
 		node_ = node.getValue();
-		tsnow_ = System.currentTimeMillis();
-		tsoff_ = 1;
+		tsnow_ = currentTimeMs();
 	}
 
 	/*
@@ -152,20 +156,27 @@ public class DefaultGenerator implements Generator {
 	protected long nextTimestamp() {
 		long now;
 
-		// We are racing, move to next timestamp. Offset will start at 0
+		// We are racing, move to next timestamp.
 		if (tsoff_ < 0) {
 			now = awaitNextTimestamp(tsnow_);
 		} else {
-			now = System.currentTimeMillis();
+			now = currentTimeMs();
 		}
 
-		// No longer within the current ms.
-		// Eagerly following the clock!
-		// Gap is minimal 0 milliseconds max 60 sec.
+		// Visual representation of time and gap
+		// -- prv ----- now --------
+		// ... |---gap---| ..........
+
+		// Create a new gap. The gap size of the system's time resolution.
+		// https://randomascii.wordpress.com/2013/07/08/windows-timer-resolution-megawatts-wasted/
 		if (now > tsnow_) {
-			long gap = INTERVALS_PER_MS
-					* Math.min(Math.max(0, now - tsnow_), 60000);
+			long gap = Math.min(now - tsnow_, MAX_GAP_SIZE) * INTERVALS_PER_MS;
 			tsoff_ = RANDOM.nextInt((int) gap);
+			tsnow_ = now;
+		}
+
+		// Time moved backwards, that is time skewing
+		else if (now < tsnow_) {
 			tsnow_ = now;
 		}
 
@@ -173,13 +184,13 @@ public class DefaultGenerator implements Generator {
 		long currentTime = (UUID_EPOCH_TO_UTC_EPOCH_MS + tsnow_)
 				* INTERVALS_PER_MS;
 
-		// When skewing time..
-		if (now <= tsnow_) {
-			return -currentTime;
-		}
-
 		// Return the uuid time minus the artifical tick decremented
 		return (currentTime - tsoff_--);
+	}
+
+	/** Override for testing **/
+	protected long currentTimeMs() {
+		return System.currentTimeMillis();
 	}
 
 	/**
@@ -190,7 +201,7 @@ public class DefaultGenerator implements Generator {
 	private long awaitNextTimestamp(final long timestamp) {
 		long now;
 
-		while ((now = System.currentTimeMillis()) == timestamp
+		while ((now = currentTimeMs()) == timestamp
 				&& !Thread.currentThread().isInterrupted()) {
 			Thread.yield();
 		}

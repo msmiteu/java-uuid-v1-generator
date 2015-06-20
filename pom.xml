@@ -47,7 +47,7 @@
 			<groupId>com.fasterxml.util</groupId>
 			<artifactId>java-merge-sort</artifactId>
 			<version>0.9.1</version>
-			<scope>provided</scope>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<scm>

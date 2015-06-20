@@ -63,10 +63,10 @@ public class UUIDWriter {
 		cmd.add("child");
 
 		File dir = new File("C:\\Project\\UUIDTest\\out.log");
-		final Redirect redir = Redirect.to(dir);
+		final Redirect redir = Redirect.appendTo(dir);
 
 		ExecutorService executorService = Executors.newFixedThreadPool(3);
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 32; i++) {
 			executorService.execute(new Runnable() {
 
 				@Override
@@ -100,12 +100,13 @@ public class UUIDWriter {
 		int uuidlen = UUIDv1.next().toString().length();
 		int count = 100000;
 
+		SkewingGenerator gen = new SkewingGenerator();
 		RandomAccessFile rnd = new RandomAccessFile(out, "rw");
 		rnd.setLength(count * (uuidlen + 1));
 
 		List<String> uuids = new ArrayList<String>();
 		for (int i = 0; i < count; i++) {
-			UUID next = UUIDv1.next();
+			UUID next = gen.next();
 			uuids.add(next.toString());
 		}
 
