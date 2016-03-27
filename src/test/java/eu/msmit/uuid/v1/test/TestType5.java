@@ -15,42 +15,46 @@
  */
 package eu.msmit.uuid.v1.test;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.Test;
 
-import eu.msmit.uuid.v1.DefaultGenerator;
+import eu.msmit.uuid.v1.Generator;
+import eu.msmit.uuid.v1.UUIDv1;
 import junit.framework.TestCase;
 
 /**
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 1, 2015
  */
-public class TestSystemClock extends TestCase {
+public class TestType5 extends TestCase {
+	@Test
+	public void testVersion() throws Exception {
+		UUID next = UUIDv1.nextv5();
+		assertEquals(5, next.version());
+		assertEquals(2, next.variant());
+	}
 
-	private static long INTERVALS_PER_MS = 10000L;
-
-	private class ClockTester extends DefaultGenerator {
-
-		@Override
-		public long nextTimestamp() {
-			return super.nextTimestamp();
+	@Test
+	public void testGenerateNext() throws Exception {
+		for (int i = 0; i < 10; i++) {
+			UUID next = UUIDv1.nextv5();
+			assertNotNull(next);
+			System.out.println(next);
 		}
 	}
 
 	@Test
-	public void testOverruns() throws Exception {
-		ClockTester tester = new ClockTester();
-		long prev = 0;
+	public void testGenerateBatch() throws Exception {
+		int testAmount = 1000000;
 
-		for (int i = 0; i < INTERVALS_PER_MS * 100; i++) {
-			long ts = tester.nextTimestamp();
+		Set<UUID> uniqCheck = new HashSet<UUID>();
 
-			if (ts <= prev) {
-				String message = "ts=" + ts + ", prev=" + prev + ", delta="
-						+ (prev - ts) + ", i=" + i;
-				assertTrue(message, ts > prev);
-			}
+		for (int i = 0; i < testAmount; i++)
+			uniqCheck.add(UUIDv1.nextv5());
 
-			prev = ts;
-		}
+		assertEquals(testAmount, uniqCheck.size());
 	}
 }

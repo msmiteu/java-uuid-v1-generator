@@ -22,14 +22,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
 import eu.msmit.uuid.v1.DefaultGenerator;
 import eu.msmit.uuid.v1.Generator;
 import eu.msmit.uuid.v1.ParallelGenerator;
-import eu.msmit.uuid.v1.UUIDv1;
+import eu.msmit.uuid.v1.Type5Decorator;
+import junit.framework.TestCase;
 
 /**
  * @author Marijn Smit (info@msmit.eu)
@@ -100,8 +99,8 @@ public class TestGenerator extends TestCase {
 
 	@Test
 	public void testCompareSpeed() throws Exception {
-		Generator[] gen = new Generator[] { new DefaultGenerator(),
-				new ParallelGenerator() };
+		Generator[] gen = new Generator[] { new DefaultGenerator(), new ParallelGenerator(),
+				new Type5Decorator(new DefaultGenerator()) };
 		System.setErr(new PrintStream(new ByteArrayOutputStream()));
 		for (Generator g : gen) {
 			for (int w = 0; w < 1000; w++)
@@ -114,9 +113,8 @@ public class TestGenerator extends TestCase {
 			}
 
 			long time = (System.nanoTime() - ns) / i;
-			System.out.println("Generation speed=" + time + "ns per UUID (" + g
-					+ ") that is " + (int) (1000000000 / time)
-					+ " UUID's per second");
+			System.out.println("Generation speed=" + time + "ns per UUID (" + g + ") that is "
+					+ (int) (1000000000 / time) + " UUID's per second");
 		}
 	}
 

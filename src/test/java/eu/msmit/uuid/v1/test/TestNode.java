@@ -1,10 +1,9 @@
 package eu.msmit.uuid.v1.test;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
 import eu.msmit.uuid.v1.Node;
+import junit.framework.TestCase;
 
 public class TestNode extends TestCase {
 

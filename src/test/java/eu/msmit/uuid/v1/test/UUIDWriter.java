@@ -93,20 +93,19 @@ public class UUIDWriter {
 	}
 
 	private void runUUID(String[] args) throws Exception {
-		String fileName = "_" + UUID.randomUUID().toString();
+		String fileName = "_" + UUIDv1.nextv5().toString();
 		File dir = new File("C:\\Project\\UUIDTest\\seeds");
 		File out = new File(dir, fileName);
 
-		int uuidlen = UUIDv1.next().toString().length();
-		int count = 100000;
+		int uuidlen = UUIDv1.nextv5().toString().length();
+		int count = 1000000;
 
-		SkewingGenerator gen = new SkewingGenerator();
 		RandomAccessFile rnd = new RandomAccessFile(out, "rw");
 		rnd.setLength(count * (uuidlen + 1));
 
 		List<String> uuids = new ArrayList<String>();
 		for (int i = 0; i < count; i++) {
-			UUID next = gen.next();
+			UUID next = UUIDv1.nextv5();
 			uuids.add(next.toString());
 		}
 
