@@ -65,7 +65,8 @@ import java.util.UUID;
  */
 public class UUIDv1 {
 	private static final Generator GENERATOR;
-	private static final Type5Decorator TYPE5_GENERATOR;
+	private static final Generator TYPE3_GENERATOR;
+	private static final Generator TYPE5_GENERATOR;
 
 	static {
 		ServiceLoader<Generator> serviceLoader = ServiceLoader.load(Generator.class);
@@ -78,7 +79,8 @@ public class UUIDv1 {
 		}
 
 		GENERATOR = generator;
-		TYPE5_GENERATOR = new Type5Decorator(GENERATOR);
+		TYPE3_GENERATOR = new Type3Wrapper().wrap(generator);
+		TYPE5_GENERATOR = new Type5Wrapper().wrap(generator);
 	}
 
 	/**
@@ -98,9 +100,18 @@ public class UUIDv1 {
 
 	/**
 	 * @return the next {@link UUID} from the system generator. The v1 UUID is
+	 *         hashed and then outputted as a version 3 UUID;
+	 */
+	public static UUID nextv3() {
+		return TYPE3_GENERATOR.next();
+	}
+
+	/**
+	 * @return the next {@link UUID} from the system generator. The v1 UUID is
 	 *         hashed and then outputted as a version 5 UUID;
 	 */
 	public static UUID nextv5() {
 		return TYPE5_GENERATOR.next();
 	}
+
 }

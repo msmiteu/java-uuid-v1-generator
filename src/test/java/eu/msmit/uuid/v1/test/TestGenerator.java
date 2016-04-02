@@ -27,7 +27,8 @@ import org.junit.Test;
 import eu.msmit.uuid.v1.DefaultGenerator;
 import eu.msmit.uuid.v1.Generator;
 import eu.msmit.uuid.v1.ParallelGenerator;
-import eu.msmit.uuid.v1.Type5Decorator;
+import eu.msmit.uuid.v1.Type3Wrapper;
+import eu.msmit.uuid.v1.Type5Wrapper;
 import junit.framework.TestCase;
 
 /**
@@ -99,8 +100,14 @@ public class TestGenerator extends TestCase {
 
 	@Test
 	public void testCompareSpeed() throws Exception {
-		Generator[] gen = new Generator[] { new DefaultGenerator(), new ParallelGenerator(),
-				new Type5Decorator(new DefaultGenerator()) };
+		Generator[] gen = new Generator[] { //
+				new DefaultGenerator(), //
+				new ParallelGenerator(), //
+				new Type3Wrapper().wrap(new DefaultGenerator()), //
+				new Type3Wrapper().wrap(new ParallelGenerator()), //
+				new Type5Wrapper().wrap(new DefaultGenerator()), //
+				new Type5Wrapper().wrap(new ParallelGenerator()) //
+		};
 		System.setErr(new PrintStream(new ByteArrayOutputStream()));
 		for (Generator g : gen) {
 			for (int w = 0; w < 1000; w++)
