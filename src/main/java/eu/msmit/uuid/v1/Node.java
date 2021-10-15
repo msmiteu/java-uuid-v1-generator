@@ -15,44 +15,47 @@
  */
 package eu.msmit.uuid.v1;
 
+import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Represents an instance of a node on a host, with x network interfaces, in the
- * specified environment, with process ID x, and instance of the Node class with
- * ID x.
+ * specified environment, with process info x, and instance of the Node class
+ * with ID x.
  * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 24, 2015
  */
 public class Node {
-	private static final byte[] LOCALHOST = "localhost".getBytes();
-	private static final byte[] EMPTY_NETWORK_INTERFACE = new byte[] {
-			(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-			(byte) 0xFF };
-	private static final String[] ENV = new String[] { "os.name", "os.arch",
-			"os.version", "java.vm.version", "java.vm.vendor", "java.vm.name" };
-	private static final byte[] UNKNOWN_PROC_ID = new byte[4];
+	private static final long INIT_TIME = System.currentTimeMillis();
+	private static final byte[] EMPTY_NETWORK_INTERFACE = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+			(byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
+	private static final String[] ENV = new String[] { "os.name", "os.arch", "os.version", "java.vm.version",
+			"java.vm.vendor", "java.vm.name", "java.class.path", "sun.java.command" };
 
 	private final long node_;
 
 	public Node() {
 		try {
-			MessageDigest digest = MessageDigest.getInstance("md5");
-			digestHost(digest);
-			digestNetworkInterfaces(digest);
-			digestEnv(digest);
-			digestProcess(digest);
-			digestInstance(digest);
+			List<String> nodeElms = new ArrayList<>(64);
+			digestNetworkInterfaces(nodeElms);
+			digestEnv(nodeElms);
+			digestProcess(nodeElms);
+			digestInstance(nodeElms);
 
+			MessageDigest digest = MessageDigest.getInstance("md5");
+			for (String nodeElm : nodeElms) {
+				digest.update(nodeElm.getBytes());
+			}
 			byte[] buf = digest.digest();
 
 			long v = (buf[5] & 0xFFL) << 40;
@@ -70,87 +73,37 @@ public class Node {
 		}
 	}
 
-	protected void digestInstance(MessageDigest digest) {
-		digest.update(intToBuf(getInstanceId()));
+	protected void digestInstance(List<String> nodeElms) {
+		nodeElms.add("instanceId=" + getInstanceId());
 	}
 
 	protected int getInstanceId() {
 		return System.identityHashCode(this);
 	}
 
-	protected void digestProcess(MessageDigest digest) {
-		RuntimeMXBean mxBean = ManagementFactory.getRuntimeMXBean();
-		if (mxBean == null) {
-			digest.update(UNKNOWN_PROC_ID);
-			return;
-		}
+	protected void digestProcess(List<String> nodeElms) {
+		// Start and uptime are quite unique to identify a process
+		long startTime = INIT_TIME;
+		long upTime = System.currentTimeMillis() - INIT_TIME;
 
-		String jvmName = mxBean.getName();
-		int index = jvmName.indexOf('@');
-
-		if (index < 1) {
-			digest.update(UNKNOWN_PROC_ID);
-			return;
-		}
-
-		try {
-			int procId = Integer.parseInt(jvmName.substring(0, index));
-			byte[] buf = intToBuf(procId);
-			digest.update(buf);
-		} catch (NumberFormatException e) {
-			digest.update(UNKNOWN_PROC_ID);
-		}
-
+		nodeElms.add("proc=" + startTime + ";" + upTime);
+		nodeElms.add("cwd=" + new File(".").getAbsolutePath());
 	}
 
-	private byte[] intToBuf(int procId) {
-		byte[] buf = new byte[4];
-		buf[3] = (byte) (procId >>> 24);
-		buf[2] = (byte) (procId >>> 16);
-		buf[1] = (byte) (procId >>> 8);
-		buf[0] = (byte) (procId);
-		return buf;
-	}
-
-	protected void digestEnv(MessageDigest digest) {
+	protected void digestEnv(List<String> nodeElms) {
 		for (String prop : ENV) {
 			try {
 				String val = System.getProperty(prop);
-				digest.update(prop.getBytes());
-				if (val != null) {
-					digest.update(val.getBytes());
-				}
+				nodeElms.add(prop + "=" + val);
 			} catch (Exception e) {
-				digest.update(prop.getBytes());
+				nodeElms.add(prop + "=?");
 			}
 		}
 	}
 
-	protected void digestHost(MessageDigest digest) {
+	protected void digestNetworkInterfaces(List<String> nodeElms) {
 		try {
-			InetAddress localhost = InetAddress.getLocalHost();
-
-			if (localhost == null) {
-				digest.update(LOCALHOST);
-				return;
-			}
-
-			String name = localhost.getHostName();
-			if (name == null) {
-				digest.update(LOCALHOST);
-				return;
-			}
-
-			digest.update(name.getBytes());
-		} catch (UnknownHostException e) {
-			digest.update(LOCALHOST);
-		}
-	}
-
-	protected void digestNetworkInterfaces(MessageDigest digest) {
-		try {
-			Enumeration<NetworkInterface> ifaces = NetworkInterface
-					.getNetworkInterfaces();
+			Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
 
 			while (ifaces.hasMoreElements()) {
 				NetworkInterface iface = ifaces.nextElement();
@@ -165,10 +118,17 @@ public class Node {
 					continue;
 				}
 
-				digest.update(addr);
+				nodeElms.add("hwAddr=" + Arrays.toString(addr));
+
+				if (iface.isUp()) {
+					for (InetAddress inetAddr : Collections.list(iface.getInetAddresses())) {
+						String hostAddr = inetAddr.getHostAddress();
+						nodeElms.add("hostAddr=" + hostAddr);
+					}
+				}
 			}
 		} catch (IOException e) {
-			digest.update(EMPTY_NETWORK_INTERFACE);
+			nodeElms.add("hwAddr=" + Arrays.toString(EMPTY_NETWORK_INTERFACE));
 		}
 	}
 

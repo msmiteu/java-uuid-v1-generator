@@ -21,12 +21,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 /**
+ * Wraps a version 1 UUID to another digest form, for example type 3 and 5.
+ * 
  * @author Marijn Smit (info@msmit.eu)
  * @since Mar 27, 2016
  */
 abstract class DigestWrapper {
 
-	/** UUIDv1 to Type 5 namespace **/
+	/** UUIDv1 to wrapper namespace **/
 	protected static final UUID NAMESPACE = UUID.fromString("df3deac8-092e-527c-8b1b-2d46f52ff852");
 
 	/** The digester **/
@@ -96,7 +98,7 @@ abstract class DigestWrapper {
 
 		byte[] sha1Bytes = md.digest(bytes);
 		sha1Bytes[6] &= 0x0f; /* clear version */
-		sha1Bytes[6] |= version_; /* set to version 3 */
+		sha1Bytes[6] |= version_; /* set to version of #getVersion() */
 		sha1Bytes[8] &= 0x3f; /* clear variant */
 		sha1Bytes[8] |= 0x80; /* set to IETF variant */
 
